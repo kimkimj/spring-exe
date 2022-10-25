@@ -18,9 +18,18 @@ class UserDaoTest {
     public void addAndGet(){
         UserDao userDao = new UserDao();
         userDao = context.getBean("awsUserDao", UserDao.class);
+
+        // Delete
+        userDao.deleteAll();
+
+        //check the number of rows
+        assertEquals(0, userDao.getCount());
+
+        // insert
         userDao.add(new User("1", "lulu", "cat"));
         User user = userDao.findById("1");
-        assertEquals("lulu", user.getName());
+        assertEquals("lulu", user.getName()); // check name
+        assertEquals(1, userDao.getCount()); // check count
     }
 
 }
