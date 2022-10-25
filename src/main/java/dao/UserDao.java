@@ -18,10 +18,11 @@ public class UserDao {
     }
 
     public void add(User user) {
+        Connection c;
         try {
-            Connection con = connectionMaker.getConnection();
+            c = connectionMaker.getConnection();
 
-            PreparedStatement pstmt = con.prepareStatement("INSERT INTO users(id, name, password) VALUES(?,?,?)");
+            PreparedStatement pstmt = c.prepareStatement("INSERT INTO users(id, name, password) VALUES(?,?,?)");
             pstmt.setString(1, user.getId());
             pstmt.setString(2, user.getName());
             pstmt.setString(3, user.getPassword());
@@ -29,7 +30,7 @@ public class UserDao {
             pstmt.executeUpdate();
 
             pstmt.close();
-            con.close();
+            c.close();
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -37,29 +38,29 @@ public class UserDao {
     }
 
     public User findById(String id) {
+        Connection c;
         try {
-            Connection con = connectionMaker.getConnection();
+            c = connectionMaker.getConnection();
 
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM users WHERE id = ?");
+            PreparedStatement pstmt = c.prepareStatement("SELECT * FROM users WHERE id = ?");
             pstmt.setString(1, id);
 
+            // Execute query and save the data into ResultSet
             ResultSet rs = pstmt.executeQuery();
             User user = null;
 
+            // If the queried data exists
             if (rs.next()) {
                 user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
             }
-
             rs.close();
             pstmt.close();
-            con.close();
+            c.close();
 
             if(user == null){
                 throw new EmptyResultDataAccessException(1);
             }
             return user;
-
-
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -67,34 +68,68 @@ public class UserDao {
     }
 
     public void deleteAll(){
-        try{
-            Connection c = connectionMaker.getConnection();
 
-            PreparedStatement ps=c.prepareStatement("DELETE FROM users");
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        try {
+            c = connectionMaker.getConnection();
+            ps = c.prepareStatement("DELETE FROM users");
             ps.executeUpdate();
 
-            ps.close();
-            c.close();
-        }catch(SQLException e){
+        } catch(SQLException e) {
             e.printStackTrace();
+
+        } finally{
+            if (ps != null){
+                try{
+                    ps.close();
+                } catch (SQLException e){
+
+                }
+            }
+            if (c != null){
+                try{
+                    c.close();
+                } catch (SQLException e){}
+            }
         }
     }
     public int getCount(){
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
         try{
-            Connection c = connectionMaker.getConnection();
-            PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROUM users");
-            ResultSet rs = ps.executeQuery();
+            c = connectionMaker.getConnection();
+            ps = c.prepareStatement("SELECT COUNT(*) FROUM users");
+            rs = ps.executeQuery();
             rs.next();
 
-            int count = rs.getInt(1);
+            return rs.getInt(1);
 
-            rs.close();
-            ps.close();
-            c.close();
-
-            return count;
         }catch(SQLException e){
             e.printStackTrace();
+
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                }
+            }
         }
         return 0;
     }
