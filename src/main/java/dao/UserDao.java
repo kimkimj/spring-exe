@@ -17,24 +17,21 @@ public class UserDao {
         this.connectionMaker = connectonMaker;
     }
 
-    public void add(User user) {
-        Connection c;
-        try {
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException{
+        Connection c=null;
+        PreparedStatement ps=null;
+        try{
             c = connectionMaker.getConnection();
 
-            PreparedStatement pstmt = c.prepareStatement("INSERT INTO users(id, name, password) VALUES(?,?,?)");
-            pstmt.setString(1, user.getId());
-            pstmt.setString(2, user.getName());
-            pstmt.setString(3, user.getPassword());
-
-            pstmt.executeUpdate();
-
-            pstmt.close();
-            c.close();
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            ps=stmt.makePreparedStatement(c);
+            ps.executeUpdate();
+        }catch(SQLException e){
+            e.printStackTrace();
         }
+    }
+
+    public void add(User user) throws SQLException {
+        jdbcContextWithStatementStrategy(new AddStatement(user));
     }
 
     public User findById(String id) {
@@ -67,33 +64,8 @@ public class UserDao {
         }
     }
 
-    public void deleteAll(){
-
-        Connection c = null;
-        PreparedStatement ps = null;
-
-        try {
-            c = connectionMaker.getConnection();
-            ps = c.prepareStatement("DELETE FROM users");
-            ps.executeUpdate();
-
-        } catch(SQLException e) {
-            e.printStackTrace();
-
-        } finally{
-            if (ps != null){
-                try{
-                    ps.close();
-                } catch (SQLException e){
-
-                }
-            }
-            if (c != null){
-                try{
-                    c.close();
-                } catch (SQLException e){}
-            }
-        }
+    public void deleteAll() throws SQLException {
+        jdbcContextWithStatementStrategy(new DeleteAllStatement());
     }
     public int getCount(){
         Connection c = null;
