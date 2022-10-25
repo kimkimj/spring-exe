@@ -2,6 +2,7 @@ package dao;
 
 import dao.ConnectionMaker;
 import domain.User;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.sql.*;
 
@@ -43,15 +44,22 @@ public class UserDao {
             pstmt.setString(1, id);
 
             ResultSet rs = pstmt.executeQuery();
-            rs.next();
-            domain.User user = new User(rs.getString("id"), rs.getString("name"),
-                    rs.getString("password"));
+            User user = null;
+
+            if (rs.next()) {
+                user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
+            }
 
             rs.close();
             pstmt.close();
             con.close();
 
+            if(user == null){
+                throw new EmptyResultDataAccessException(1);
+            }
             return user;
+
+
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -73,14 +81,14 @@ public class UserDao {
     }
     public int getCount(){
         try{
-            Connection c= connectionMaker.getConnection();
-            PreparedStatement ps=c.prepareStatement("SELECT COUNT(*) FROUM users");
-            ResultSet result=ps.executeQuery();
-            result.next();
+            Connection c = connectionMaker.getConnection();
+            PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROUM users");
+            ResultSet rs = ps.executeQuery();
+            rs.next();
 
-            int count=result.getInt(1);
+            int count = rs.getInt(1);
 
-            result.close();
+            rs.close();
             ps.close();
             c.close();
 
