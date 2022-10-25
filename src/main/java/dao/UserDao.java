@@ -2,6 +2,7 @@ package dao;
 
 import dao.ConnectionMaker;
 import domain.User;
+import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.dao.EmptyResultDataAccessException;
 
 import javax.sql.DataSource;
@@ -10,19 +11,8 @@ import java.sql.*;
 public class UserDao {
 
     private DataSource dataSource;
-    /*
-    private ConnectionMaker connectionMaker;
+    private JdbcContext jdbcContext;
 
-
-    public UserDao() {
-        this.connectionMaker = new AwsConnectionMaker();
-    }
-
-    public UserDao(ConnectionMaker connectonMaker){
-        this.connectionMaker = connectonMaker;
-    }
-
-*/
     public UserDao(DataSource dataSource){
         this.dataSource = dataSource;
     }
@@ -30,7 +20,7 @@ public class UserDao {
     public void setDataSource(DataSource dataSource){
         this.dataSource=dataSource;
     }
-
+/*
     public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException{
         Connection c = null;
         PreparedStatement ps = null;
@@ -43,10 +33,25 @@ public class UserDao {
         }catch(SQLException e){
             e.printStackTrace();
         }
+    }*/
+
+    public void setJdbcContext(JdbcContext jdbcContext) {
+        this.jdbcContext = jdbcContext;
     }
 
     public void add(User user) throws SQLException {
-        jdbcContextWithStatementStrategy(new AddStatement(user));
+        //jdbcContextWithStatementStrategy(new AddStatement(user));
+        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+                PreparedStatement ps=c.prepareStatement("insert into users(id, name, password) values (?, ?, ?)");
+                ps.setString(1, user.getId());
+                ps.setString(2, user.getName());
+                ps.setString(3, user.getPassword());
+
+                return ps;
+            }
+        });
     }
 
     public User findById(String id) {
@@ -81,7 +86,13 @@ public class UserDao {
     }
 
     public void deleteAll() throws SQLException {
-        jdbcContextWithStatementStrategy(new DeleteAllStatement());
+        //jdbcContextWithStatementStrategy(new DeleteAllStatement());
+        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+                return c.prepareStatement("delete from users");
+            }
+        });
     }
     public int getCount(){
         Connection c = null;
