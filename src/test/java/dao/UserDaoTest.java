@@ -32,7 +32,7 @@ class UserDaoTest {
 
     @Test
     @DisplayName("Testing insert")
-    public void addAndGet(){
+    public void addAndGet() throws SQLException {
         //UserDao userDao = new UserDao();
         //userDao = context.getBean("awsUserDao", UserDao.class);
 
